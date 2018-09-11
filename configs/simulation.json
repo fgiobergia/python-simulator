@@ -1,0 +1,8 @@
+{
+    "output": {
+        "dir": "output",
+        "shouldStore": true
+    },
+    "frameRate": 30,
+    "durationSeconds": 10000
+}

@@ -1,0 +1,7 @@
+{
+    "output": {
+        "shouldStore": false
+    },
+    "frameRate": 30,
+    "durationSeconds": 3000
+}
