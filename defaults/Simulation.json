@@ -3,5 +3,9 @@
         "shouldStore": false
     },
     "frameRate": 30,
-    "durationSeconds": 3000
+    "durationSeconds": 3000,
+    "resolution": {
+        "width": 840,
+        "height": 640
+    }
 }

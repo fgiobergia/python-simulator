@@ -8,6 +8,19 @@ def load_defualt_config(config_for):
         return {}
     return json.load(f)
 
+class Frame:
+    def __init__(self, resolution):
+        self.width = resolution["width"]
+        self.height = resolution["height"]
+        # set up "canvas" here (i.e. a matrix of pixels)
+    
+    # TODO: this is going to require arguments such as
+    # matrix of pixels to draw,
+    # position
+    # rotation
+    def draw(self):
+        pass
+
 class Simulation:
     def __init__(self, configFile):
         self.configFile = configFile
@@ -21,14 +34,21 @@ class Simulation:
         self._config = { **defaultConfig, **json.load(f) }
 
         self.q = PriorityQ()
+    
 
     def config(self, key, default=None):
         return self._config.get(key, default)
         
     def run(self):
-        frames = self.config("durationSeconds") * self.config("frameRate")
-        for i in range(frames):
+        totalFrames = self.config("durationSeconds") * self.config("frameRate")
+        # TODO: if `frames` gets too large, alternative non-volatile-memory-based
+        # solutions should be considered (e.g. store on disk)
+        frames = [] # this will contain a list of all the frames
+        resolution = self.config("resolution")
+
+        for i in range(totalFrames):
             # create new image for the frame
+            frame = Frame(resolution)
 
             # iterate over entities to update them
             # (here, the order doesn't really matter, 
@@ -39,7 +59,8 @@ class Simulation:
 
             # iterate over entities to draw them
 
-            # close frame
+            # store frame
+            frames.append(frame)
     
     # add an entity to the queue of
     # entities (with priority `priority`)
