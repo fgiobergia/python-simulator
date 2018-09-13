@@ -1,5 +1,7 @@
 import json
+import numpy as np
 from utils import PriorityQ
+from entity import Drawable
 
 def load_defualt_config(config_for):
     config_file_path = "../defaults/{0}.json".format(config_for)
@@ -8,17 +10,37 @@ def load_defualt_config(config_for):
         return {}
     return json.load(f)
 
+class Color:
+    def __init__(self, r, g, b, a):
+        self.color = (r,g,b,a)
+
 class Frame:
     def __init__(self, resolution):
         self.width = resolution["width"]
         self.height = resolution["height"]
         # set up "canvas" here (i.e. a matrix of pixels)
+        # For each frame, 5 pieces of information are stored
+        # r, g, b, a: red, green, blue, alpha information of the pixel
+        # e: "writing" entity: needed to identify "who" wrote that pixel
+        #    (useful for detecting collisions) (0 -> nobody)
+        self.canvas = np.zeros(self.height * self.width * 5) # 5 -> (r,g,b,a,e)
     
-    # TODO: this is going to require arguments such as
-    # matrix of pixels to draw,
-    # position
-    # rotation
-    def draw(self):
+    def setBgColor(self, color):
+        self.canvas(np.tile([*color.color, 0], self.height * self.width))
+
+    # draw a drawable to the canvas
+    # if a collision is detected,it should
+    # return an id of the "collided" object
+    def draw(self, drawable):
+        pass
+
+    # this method "compresses" the image by
+    # removing the information about "who" wrote
+    # each pixel -- this results in a reduction in
+    # space of 1/5 (this should be run after all
+    # entities have been drawn and there no longer
+    # is a need to store information about collisions)
+    def compress(self):
         pass
 
 class Simulation:
@@ -46,18 +68,18 @@ class Simulation:
         frames = [] # this will contain a list of all the frames
         resolution = self.config("resolution")
 
-        for i in range(totalFrames):
+        for _ in range(totalFrames):
             # create new image for the frame
             frame = Frame(resolution)
 
             # iterate over entities to update them
-            # (here, the order doesn't really matter, 
-            # so we can iterate over the queue without
-            # too much care about its order
-            for _ in self.q:
-                pass
+            for _, entity in self.q:
+                drawable = entity.draw()
+                frame.draw(drawable) # TODO check return value (there may be a collision occurring here)
 
             # iterate over entities to draw them
+            for _ in self.q:
+                pass
 
             # store frame
             frames.append(frame)
