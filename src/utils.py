@@ -1,4 +1,5 @@
 from queue import PriorityQueue
+import copy
 
 # PriorityQueue is missing a few things, 
 # which will be implemented by PriorityQ
@@ -11,10 +12,20 @@ class PriorityQ(PriorityQueue):
         # (but the rest of the list is not sorted icyww)
         return self.queue[0]
 
-
-    # this iterates over the priority queue
-    # RANDOMLY, meaning that the order in which
-    # the elements are visisted is not dependent
-    # on their priority
+    # since PriorityQueue does not allow
+    # iterating over the queue without
+    # emptying it, PriorityQ makes a copy
+    # of the queue and then proceeds with 
+    # the iteration
     def __iter__(self):
-        return iter(self.queue)
+        tmpQueue = copy.deepcopy(self.queue)
+        self.backupQueue = tmpQueue
+        return self
+    
+    def __next__(self):
+        if self.empty():
+            self.queue = self.backupQueue # restore original queue
+            del self.backupQueue
+            raise StopIteration()
+        else:
+            return self.get()
