@@ -1,3 +1,5 @@
+from simulation import Color
+
 class Coords:
     def __init__(self, x, y):
         self.x = x
@@ -9,6 +11,11 @@ class Drawable:
         self.content = content
         self.origin = origin 
         self.rotation = rotation
+    
+    def getColor(self, coords):
+        # get the 4 values contained in "content"
+        # at the appropriate position and return them
+        return Color(*self.content[(coords.y * self.size.x + coords.x) * 4:4])
 
 
 class Entity:
@@ -22,7 +29,10 @@ class Entity:
         # - a content (array of length width * height)
         # - an origin (x,y) for the top-left corner (in the canvas)
         # - a rotation (in degrees, around the center)
-        self.drawable = Drawable((10,10), [], (0,0), 0)
+        # Additionally, each Entity needs to be assigned a
+        # unique identifier
+        self.drawable = Drawable(Coords(10,10), [], Coords(0,0), 0)
+        self.id = "bloop"
         pass
 
     # delta: amount of time
@@ -33,7 +43,7 @@ class Entity:
     def update(self, delta):
         pass
     
-    # returns the Drawable object
-    def draw(self):
-        return self.drawable
+    # Draw the drawable to the frame
+    def draw(self, frame):
+        return frame.draw(self.drawable, self.id)
     

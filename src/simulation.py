@@ -1,7 +1,7 @@
 import json
 import numpy as np
 from utils import PriorityQ
-from entity import Drawable
+from entity import Drawable, Coords
 
 def load_defualt_config(config_for):
     config_file_path = "../defaults/{0}.json".format(config_for)
@@ -13,26 +13,69 @@ def load_defualt_config(config_for):
 class Color:
     def __init__(self, r, g, b, a):
         self.color = (r,g,b,a)
+    
+    def over(self, colorB):
+        # self is the "top-most" color
+        # TODO use alpha compositing to
+        # correctly overlay colors
+        # https://en.wikipedia.org/wiki/Alpha_compositing
+        # (by not implementing this method,
+        # the new color will always "cover" the
+        # underlying one, even though the alpha channel
+        # is not 1)
+        pass
 
 class Frame:
+    itemsPerPixel = 5 # red, green, blue, alpha, owner
+
     def __init__(self, resolution):
-        self.width = resolution["width"]
-        self.height = resolution["height"]
+        self.size = Coords(resolution["width"], resolution["height"])
         # set up "canvas" here (i.e. a matrix of pixels)
         # For each frame, 5 pieces of information are stored
         # r, g, b, a: red, green, blue, alpha information of the pixel
         # e: "writing" entity: needed to identify "who" wrote that pixel
         #    (useful for detecting collisions) (0 -> nobody)
-        self.canvas = np.zeros(self.height * self.width * 5) # 5 -> (r,g,b,a,e)
+        self.canvas = np.zeros(self.size.y * self.size.x * Frame.itemsPerPixel)
     
     def setBgColor(self, color):
-        self.canvas(np.tile([*color.color, 0], self.height * self.width))
+        self.canvas(np.tile([*color.color, 0], self.size.y * self.size.x))
 
     # draw a drawable to the canvas
     # if a collision is detected,it should
     # return an id of the "collided" object
-    def draw(self, drawable):
-        pass
+    def draw(self, drawable, entityId):
+        # collisions are stored in a set and
+        # eventually returned (multiple collisions
+        # with the same entity will only be
+        # returned once)
+        collisions = set({})
+        for i_ in range(drawable.size.y):
+            for j_ in range(drawable.size.x):
+                i = i_ + drawable.origin.y
+                j = j_ + drawable.origin.x
+                # TODO use rotation matrix to rotate
+                # (i,j) by an angle `drawable.rotation`
+                if i >= 0 and i < self.size.y and j >= 0 and j < self.size.x:
+                    # pixel is within the frame's
+                    # boundaries and can thus be drawn
+                    pos = i * self.size.x + j * Frame.itemsPerPixel
+                    pr,pg,pb,pa,owner = self.canvas[pos:pos+Frame.itemsPerPixel]
+                    if owner != 0 and owner != entityId:
+                        # the pixel had previously been drawn
+                        # by someone else (!= 0) who isn't the
+                        # current entity (it might happen, with
+                        # rotations, that the same pixel is drawn
+                        # multiple times by the same entity)
+                        collisions.add(owner)
+                    prevColor = Color(pr,pg,pb,pa)
+                    color = drawable.getPixel(i_, j_)
+                    color.over(prevColor)
+                    # draw the new pixel to the canvas
+                    # (the new "owner" of the pixel is
+                    # the latest drawer (previous ones
+                    # are overwritten))
+                    self.canvas[pos:pos+Frame.itemsPerPixel+1] = [*color, entityId]
+        return collisions # return a collision array for the caller to handle
 
     # this method "compresses" the image by
     # removing the information about "who" wrote
@@ -74,8 +117,7 @@ class Simulation:
 
             # iterate over entities to update them
             for _, entity in self.q:
-                drawable = entity.draw()
-                frame.draw(drawable) # TODO check return value (there may be a collision occurring here)
+                entity.draw(frame)
 
             # iterate over entities to draw them
             for _ in self.q:
