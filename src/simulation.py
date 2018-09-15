@@ -59,6 +59,11 @@ class Frame:
                     # pixel is within the frame's
                     # boundaries and can thus be drawn
                     pos = i * self.size.x + j * Frame.itemsPerPixel
+                    color = drawable.getPixel(i_, j_)
+                    # if the pixel is completely transparent,
+                    # skip it (and ignore collisions)
+                    if color.a == 0:
+                        continue
                     pr,pg,pb,pa,owner = self.canvas[pos:pos+Frame.itemsPerPixel]
                     if owner != 0 and owner != entityId:
                         # the pixel had previously been drawn
@@ -68,7 +73,6 @@ class Frame:
                         # multiple times by the same entity)
                         collisions.add(owner)
                     prevColor = Color(pr,pg,pb,pa)
-                    color = drawable.getPixel(i_, j_)
                     color.over(prevColor)
                     # draw the new pixel to the canvas
                     # (the new "owner" of the pixel is
