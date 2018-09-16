@@ -1,7 +1,7 @@
 import json
 import numpy as np
-from utils import PriorityQ
-from entity import Drawable, Coords
+from .utils import PriorityQ
+from .entity import Drawable, Coords, Color
 
 def load_defualt_config(config_for):
     config_file_path = "../defaults/{0}.json".format(config_for)
@@ -9,21 +9,6 @@ def load_defualt_config(config_for):
     if f is None:
         return {}
     return json.load(f)
-
-class Color:
-    def __init__(self, r, g, b, a):
-        self.color = (r,g,b,a)
-    
-    def over(self, colorB):
-        # self is the "top-most" color
-        # TODO use alpha compositing to
-        # correctly overlay colors
-        # https://en.wikipedia.org/wiki/Alpha_compositing
-        # (by not implementing this method,
-        # the new color will always "cover" the
-        # underlying one, even though the alpha channel
-        # is not 1)
-        pass
 
 class Frame:
     itemsPerPixel = 5 # red, green, blue, alpha, owner
@@ -81,7 +66,7 @@ class Frame:
                     self.canvas[pos:pos+Frame.itemsPerPixel+1] = [*color, entityId]
         return collisions # return a collision array for the caller to handle
 
-    # this method "compresses" the image by
+    # TODO: this method "compresses" the image by
     # removing the information about "who" wrote
     # each pixel -- this results in a reduction in
     # space of 1/5 (this should be run after all
@@ -121,13 +106,14 @@ class Simulation:
 
             # iterate over entities to update them
             for _, entity in self.q:
-                entity.draw(frame)
+                pass
 
             # iterate over entities to draw them
             for _ in self.q:
-                pass
+                entity.draw(frame)
 
             # store frame
+            frame.compress()
             frames.append(frame)
     
     # add an entity to the queue of
