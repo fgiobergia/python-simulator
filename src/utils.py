@@ -18,7 +18,7 @@ class PriorityQ(PriorityQueue):
     # of the queue and then proceeds with 
     # the iteration
     def __iter__(self):
-        tmpQueue = copy.deepcopy(self.queue)
+        tmpQueue = self.queue[:] #copy.deepcopy(self.queue)
         self.backupQueue = tmpQueue
         return self
     

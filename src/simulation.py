@@ -2,6 +2,7 @@ import json
 import numpy as np
 from utils import PriorityQ
 from entity import Drawable, Coords, Color
+from PIL import Image
 
 
 def load_default_config(config_for):
@@ -37,14 +38,16 @@ class Frame:
         collisions = set({})
         for i_ in range(drawable.size.y):
             for j_ in range(drawable.size.x):
-                i = i_ + drawable.origin.y
-                j = j_ + drawable.origin.x
+                i = i_ + int(drawable.origin.y)
+                j = j_ + int(drawable.origin.x)
                 # TODO use rotation matrix to rotate
                 # (i,j) by an angle `drawable.rotation`
                 if i >= 0 and i < self.size.y and j >= 0 and j < self.size.x:
                     # pixel is within the frame's
                     # boundaries and can thus be drawn
                     pos = (i * self.size.x + j) * Frame.itemsPerPixel
+                    if drawable.size.x == 100 and i_ == 0 and j_ == 0:
+                        print(pos)
                     color = drawable.getPixel(Coords(j_, i_))
                     # if the pixel is completely transparent,
                     # skip it (and ignore collisions)
@@ -105,8 +108,8 @@ class Simulation:
         # solutions should be considered (e.g. store on disk)
         self.frames = [] # this will contain a list of all the frames
         resolution = self.config("resolution")
-        totalFrames = 1
-        for _ in range(totalFrames):
+
+        for i in range(totalFrames):
             # create new image for the frame
             frame = Frame(resolution)
             if self.config("bgColor") is not None:
@@ -123,18 +126,18 @@ class Simulation:
 
             # store frame
             frame.compress()
-            self.frames.append(frame)
-        t = self.frames[0].canvas
-        w = self.config('resolution')['width']
-        h = self.config('resolution')['height']
-        v = np.reshape([ np.uint8(t[i*5:i*5+3]) for i in range(w*h) ], (h, w, 3))
-        from PIL import Image
+            #self.frames.append(frame) # currently storing frames on disk
 
-        im = Image.fromarray(v, "RGB")
-        im.save("test.png")
-        im.close()
-    
-    # add an entity to the queue of
+            w = self.config('resolution')['width']
+            h = self.config('resolution')['height']
+            v = np.reshape([ np.uint8(frame.canvas[j*5:j*5+3]) for j in range(w*h) ], (h, w, 3))
+            print(v.shape)
+
+            im = Image.fromarray(v, "RGB")
+            im.save("test{0}.png".format(i))
+            im.close()
+        
+        # add an entity to the queue of
     # entities (with priority `priority`)
     # (highest priorities are drawn top-most)
     # by default, it should draw on top of

@@ -74,7 +74,19 @@ class Entity:
     # some information of the drawable)
     def update(self, delta):
         pass
+
+    def getX(self):
+        return self.drawable.origin.x
+
+    def setX(self, x):
+        self.drawable.origin.x = x
     
+    def getY(self):
+        return self.drawable.origin.y
+        
+    def setY(self, y):
+        self.drawable.origin.y = y
+
     # Draw the drawable to the frame
     def draw(self, frame):
         return frame.draw(self.drawable, hash(self.id))
