@@ -1,9 +1,14 @@
 from PIL import Image
 import numpy as np
+import json
 
 class Color:
     def __init__(self, r, g, b, a):
         self.color = (r,g,b,a)
+        self.r = r
+        self.g = g
+        self.b = b
+        self.a = a
     
     def over(self, colorB):
         # self is the "top-most" color
@@ -30,7 +35,7 @@ class Drawable:
 
         # load size and the image itself (as an array of pixels)
         self.size = Coords(*im.size) # width, height
-        self.content = np.array([ int(x) for x in imRGBA.tobytes() ])
+        self.content = np.array([ int(x) for x in imRGBA.tobytes() ]) # TODO change type to np.uint8 (check what "owner" type needs to be for frames)
         
         # close stuff that is no longer needed
         im.close()
@@ -42,13 +47,14 @@ class Drawable:
     def getPixel(self, coords):
         # get the 4 values contained in "content"
         # at the appropriate position and return them
-        return Color(*self.content[(coords.y * self.size.x + coords.x) * 4:4])
+        offset = (coords.y * self.size.x + coords.x) * 4
+        return Color(*self.content[offset:offset + 4])
 
 
 class Entity:
     # TODO: load the drawable from 
     # the appropriate file
-    def __init__(self):
+    def __init__(self, _id, spriteFile, coords=Coords(0,0), rotation=0):
         # An entity acts in ways that
         # update the underlying Drawable,
         # which is identified by
@@ -58,10 +64,9 @@ class Entity:
         # - a rotation (in degrees, around the center)
         # Additionally, each Entity needs to be assigned a
         # unique identifier
-        self.drawable = Drawable("../assets/mario.png", Coords(0,0), 0)
-        self.id = "bloop"
-        pass
-
+        self.drawable = Drawable(spriteFile, coords, rotation)
+        self.id = _id
+    
     # delta: amount of time
     # passed since previous 
     # update
@@ -72,5 +77,5 @@ class Entity:
     
     # Draw the drawable to the frame
     def draw(self, frame):
-        return frame.draw(self.drawable, self.id)
+        return frame.draw(self.drawable, hash(self.id))
     

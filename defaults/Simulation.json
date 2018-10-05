@@ -3,9 +3,10 @@
         "shouldStore": false
     },
     "frameRate": 30,
-    "durationSeconds": 3000,
+    "durationSeconds": 10,
     "resolution": {
-        "width": 840,
-        "height": 640
-    }
+        "width": 640,
+        "height": 480
+    },
+    "bgColor": null
 }

@@ -4,5 +4,10 @@
         "shouldStore": true
     },
     "frameRate": 30,
-    "durationSeconds": 10000
+    "durationSeconds": 10000,
+    "bgColor": [0,255,255,255],
+    "resolution": {
+        "width": 600,
+        "height": 327
+    }
 }

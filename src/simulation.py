@@ -1,9 +1,10 @@
 import json
 import numpy as np
-from .utils import PriorityQ
-from .entity import Drawable, Coords, Color
+from utils import PriorityQ
+from entity import Drawable, Coords, Color
 
-def load_defualt_config(config_for):
+
+def load_default_config(config_for):
     config_file_path = "../defaults/{0}.json".format(config_for)
     f = open(config_file_path)
     if f is None:
@@ -23,7 +24,7 @@ class Frame:
         self.canvas = np.zeros(self.size.y * self.size.x * Frame.itemsPerPixel)
     
     def setBgColor(self, color):
-        self.canvas(np.tile([*color.color, 0], self.size.y * self.size.x))
+        self.canvas = np.tile([*color.color, 0], self.size.y * self.size.x)
 
     # draw a drawable to the canvas
     # if a collision is detected,it should
@@ -43,8 +44,8 @@ class Frame:
                 if i >= 0 and i < self.size.y and j >= 0 and j < self.size.x:
                     # pixel is within the frame's
                     # boundaries and can thus be drawn
-                    pos = i * self.size.x + j * Frame.itemsPerPixel
-                    color = drawable.getPixel(i_, j_)
+                    pos = (i * self.size.x + j) * Frame.itemsPerPixel
+                    color = drawable.getPixel(Coords(j_, i_))
                     # if the pixel is completely transparent,
                     # skip it (and ignore collisions)
                     if color.a == 0:
@@ -63,7 +64,7 @@ class Frame:
                     # (the new "owner" of the pixel is
                     # the latest drawer (previous ones
                     # are overwritten))
-                    self.canvas[pos:pos+Frame.itemsPerPixel+1] = [*color, entityId]
+                    self.canvas[pos:pos+Frame.itemsPerPixel] = [*color.color, entityId]
         return collisions # return a collision array for the caller to handle
 
     # TODO: this method "compresses" the image by
@@ -76,16 +77,20 @@ class Frame:
         pass
 
 class Simulation:
-    def __init__(self, configFile):
+    def __init__(self, configFile=None):
         self.configFile = configFile
-        defaultConfig = load_defualt_config("simulation")
+        defaultConfig = load_default_config("Simulation")
 
-        f = open(self.configFile)
+        if self.configFile is not None:
+            f = open(self.configFile)
 
-        if f is None:
-            raise Exception("Cannot open configuration file")
+            if f is None:
+                raise Exception("Cannot open configuration file")
+            config = json.load(f)
+        else:
+            config = {}
 
-        self._config = { **defaultConfig, **json.load(f) }
+        self._config = { **defaultConfig, **config }
 
         self.q = PriorityQ()
     
@@ -95,26 +100,39 @@ class Simulation:
         
     def run(self):
         totalFrames = self.config("durationSeconds") * self.config("frameRate")
+        delta = self.config("frameRate")**-1
         # TODO: if `frames` gets too large, alternative non-volatile-memory-based
         # solutions should be considered (e.g. store on disk)
-        frames = [] # this will contain a list of all the frames
+        self.frames = [] # this will contain a list of all the frames
         resolution = self.config("resolution")
-
+        totalFrames = 1
         for _ in range(totalFrames):
             # create new image for the frame
             frame = Frame(resolution)
+            if self.config("bgColor") is not None:
+                frame.setBgColor(Color(*self.config("bgColor")))
+            
 
             # iterate over entities to update them
             for _, entity in self.q:
-                pass
+                entity.update(delta)
 
             # iterate over entities to draw them
-            for _ in self.q:
+            for _, entity in self.q:
                 entity.draw(frame)
 
             # store frame
             frame.compress()
-            frames.append(frame)
+            self.frames.append(frame)
+        t = self.frames[0].canvas
+        w = self.config('resolution')['width']
+        h = self.config('resolution')['height']
+        v = np.reshape([ np.uint8(t[i*5:i*5+3]) for i in range(w*h) ], (h, w, 3))
+        from PIL import Image
+
+        im = Image.fromarray(v, "RGB")
+        im.save("test.png")
+        im.close()
     
     # add an entity to the queue of
     # entities (with priority `priority`)
